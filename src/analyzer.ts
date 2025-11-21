@@ -5,6 +5,7 @@ import { analyzerPrompt } from './prompts/analyzerPrompt';
 import { getClaudeCommand } from './SWEAgent/claudeCodeCommands';
 import { getGeminiCommand } from './SWEAgent/geminiCodeCommands';
 import { getLLMAgentCommand, getLLMAgentSetupCommands } from './SWEAgent/llmAgentCommands';
+import { getQwenCommand } from './SWEAgent/qwenCodeCommands';
 import type { Task } from './task';
 import { trimJSONObjectArray } from './utils/trimJSON';
 import { getWorkStyleDescription, WorkStyle } from './workStyle';
@@ -101,8 +102,12 @@ export async function analyzeCodebase(
             case SWEAgentType.DEEPSEEK:
             case SWEAgentType.ZHIPU:
             case SWEAgentType.DOUBAO:
+            case SWEAgentType.SEED_CODER:
                 // Copy llmAgent.js
                 allCommands.push(...getLLMAgentSetupCommands(config));
+                break;
+            case SWEAgentType.QWEN_CLI:
+                allCommands.push(`npm install -g @qwen-code/qwen-code`);
                 break;
             default:
                 throw new Error(`Unsupported agent type: ${config.agentType}`);
@@ -120,11 +125,15 @@ export async function analyzeCodebase(
             case SWEAgentType.CLAUDE_CODE:
                 allCommands.push(getClaudeCommand(config, true));
                 break;
+            case SWEAgentType.QWEN_CLI:
+                allCommands.push(getQwenCommand(config, true));
+                break;
             case SWEAgentType.CODEX:
                 throw new Error("SWEAgentType.CODEX is not implemented yet for analyzeCodebase");
             case SWEAgentType.DEEPSEEK:
             case SWEAgentType.ZHIPU:
             case SWEAgentType.DOUBAO:
+            case SWEAgentType.SEED_CODER:
                 allCommands.push(getLLMAgentCommand(config, config.agentType, "/app/codeAnalyzerPrompt.txt"));
                 break;
             default:

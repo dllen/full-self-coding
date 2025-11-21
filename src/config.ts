@@ -10,6 +10,8 @@ export enum SWEAgentType {
     DEEPSEEK = 'deepseek',
     ZHIPU = 'zhipu',
     DOUBAO = 'doubao',
+    SEED_CODER = 'seed-coder',
+    QWEN_CLI = 'qwen-cli',
 }
 
 /**
@@ -74,6 +76,18 @@ export interface Config {
     doubaoApiKey?: string;
     doubaoModel?: string;
     doubaoBaseUrl?: string;
+
+    /**
+     * Seed-Coder Configuration
+     */
+    seedCoderApiKey?: string;
+    seedCoderModel?: string;
+    seedCoderBaseUrl?: string;
+
+    /**
+     * Qwen Code CLI Configuration
+     */
+    qwenCodeApiKey?: string;
 
     /**
      * Maximum number of Docker containers that can run locally

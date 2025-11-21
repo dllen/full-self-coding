@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { Config, SWEAgentType } from '../src/config';
 import { getLLMAgentCommand } from '../src/SWEAgent/llmAgentCommands';
+import { getQwenCommand } from '../src/SWEAgent/qwenCodeCommands';
 import { taskSolverCommands } from '../src/SWEAgent/SWEAgentTaskSolverCommands';
 
 const mockConfig: Config = {
@@ -42,6 +43,21 @@ describe('Multi-Model Support Verification', () => {
         expect(cmd).toContain('export API_KEY=doubao-key');
         expect(cmd).toContain('export BASE_URL=https://custom.url');
         expect(cmd).toContain('export MODEL=doubao-pro');
+    });
+
+    test('getLLMAgentCommand for SEED_CODER', () => {
+        const seedCoderConfig = { ...mockConfig, agentType: SWEAgentType.SEED_CODER, seedCoderApiKey: 'seed-key', seedCoderModel: 'seed-model', seedCoderBaseUrl: 'https://custom.seed.url' };
+        const cmd = getLLMAgentCommand(seedCoderConfig, SWEAgentType.SEED_CODER);
+        expect(cmd).toContain('export API_KEY=seed-key');
+        expect(cmd).toContain('export BASE_URL=https://custom.seed.url');
+        expect(cmd).toContain('export MODEL=seed-model');
+    });
+
+    test('getQwenCommand for QWEN_CLI', () => {
+        const qwenConfig = { ...mockConfig, agentType: SWEAgentType.QWEN_CLI, qwenCodeApiKey: 'qwen-key' };
+        const cmd = getQwenCommand(qwenConfig);
+        expect(cmd).toContain('export QWEN_API_KEY=qwen-key');
+        expect(cmd).toContain('qwen -p');
     });
 
     test('taskSolverCommands includes setup and execution', () => {
