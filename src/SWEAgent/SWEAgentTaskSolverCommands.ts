@@ -1,8 +1,9 @@
-import { SWEAgentType } from "../config";
 import type { Config } from "../config";
-import type {Task} from "../task";
-import {diffNodejsSourceCode} from "../prompts/diff_nodejs";
-import {getClaudeCommand} from "./claudeCodeCommands";
+import { SWEAgentType } from "../config";
+import { diffNodejsSourceCode } from "../prompts/diff_nodejs";
+import type { Task } from "../task";
+import { getClaudeCommand } from "./claudeCodeCommands";
+import { getLLMAgentCommand, getLLMAgentSetupCommands } from "./llmAgentCommands";
 
 const diffjsPrompt = diffNodejsSourceCode;
 
@@ -14,7 +15,7 @@ function environmentSetup(config: Config, gitRemoteUrl: string, task: Task, bIns
     "curl -fsSL https://deb.nodesource.com/setup_20.x | bash -",
     "apt-get install -y nodejs",
     "mkdir /app/diff && cd /app/diff && npm install simple-git",
-    
+
     // save diffjsPrompt into /app/diff/run.js
     `echo "${diffjsPrompt}" > /app/diff/run.js`,
   ];
@@ -36,9 +37,14 @@ function environmentSetup(config: Config, gitRemoteUrl: string, task: Task, bIns
           "npm install -g @openai/codex",
         );
         break;
+      case SWEAgentType.DEEPSEEK:
+      case SWEAgentType.ZHIPU:
+      case SWEAgentType.DOUBAO:
+        setupCommands.push(...getLLMAgentSetupCommands(config));
+        break;
       default:
         throw new Error(`Unsupported agent type: ${config.agentType}`);
-   }
+    }
   }
   setupCommands.push("mkdir /app/repo/fsc");
   // setupCommands.push(
@@ -48,17 +54,17 @@ function environmentSetup(config: Config, gitRemoteUrl: string, task: Task, bIns
 }
 
 export function taskSolverCommands(
-  agentType:SWEAgentType,
+  agentType: SWEAgentType,
   config: Config,
   task: Task,
   gitRemoteUrl: string,
 ): string[] {
-  if (agentType == SWEAgentType.CODEX){
-    throw new Error("CODEX is not supported yet for the task solver."); 
+  if (agentType == SWEAgentType.CODEX) {
+    throw new Error("CODEX is not supported yet for the task solver.");
   }
 
-  let finalCommandsList = [] 
-  finalCommandsList.push(...environmentSetup(config , gitRemoteUrl , task));
+  let finalCommandsList = []
+  finalCommandsList.push(...environmentSetup(config, gitRemoteUrl, task));
 
   switch (agentType) {
     case SWEAgentType.GEMINI_CLI:
@@ -67,6 +73,11 @@ export function taskSolverCommands(
     case SWEAgentType.CLAUDE_CODE:
       finalCommandsList.push(getClaudeCommand(config, false));
       return finalCommandsList;
+    case SWEAgentType.DEEPSEEK:
+    case SWEAgentType.ZHIPU:
+    case SWEAgentType.DOUBAO:
+      finalCommandsList.push(getLLMAgentCommand(config, agentType, "/app/taskSolverPrompt.txt"));
+      return finalCommandsList;
     default:
       break;
   }
@@ -74,7 +85,7 @@ export function taskSolverCommands(
   throw new Error(`Unsupported agent type: ${agentType}`);
 }
 
-function GeminiExecutionCommand(config: Config): string{
+function GeminiExecutionCommand(config: Config): string {
   if (config.googleGeminiApiKey && config.googleGeminiAPIKeyExportNeeded) {
     return `export GEMINI_API_KEY=${config.googleGeminiApiKey} && gemini -p "all the task descriptions are located at /app/taskSolverPrompt.txt, please read and execute" --yolo`;
   }

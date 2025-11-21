@@ -1,20 +1,21 @@
-import type { Task } from './task';
+import { getCodingStyle } from './codingStyle';
 import { type Config, SWEAgentType } from './config';
 import { DockerInstance, DockerRunStatus } from './dockerInstance';
 import { analyzerPrompt } from './prompts/analyzerPrompt';
-import { getCodingStyle } from './codingStyle';
-import { getWorkStyleDescription, WorkStyle } from './workStyle';
-import { trimJSONObjectArray } from './utils/trimJSON';
 import { getClaudeCommand } from './SWEAgent/claudeCodeCommands';
 import { getGeminiCommand } from './SWEAgent/geminiCodeCommands';
+import { getLLMAgentCommand, getLLMAgentSetupCommands } from './SWEAgent/llmAgentCommands';
+import type { Task } from './task';
+import { trimJSONObjectArray } from './utils/trimJSON';
+import { getWorkStyleDescription, WorkStyle } from './workStyle';
 
 /**
  * Analyzes the codebase and generates a list of tasks to be executed
  * @returns Promise<Task[]> Array of tasks identified from the codebase analysis
  */
 export async function analyzeCodebase(
-    config: Config, 
-    gitRemoteUrl: string, 
+    config: Config,
+    gitRemoteUrl: string,
     shutdownContainer: boolean = true,
     extraComandsBeforeAnalysis?: string
 ): Promise<Task[]> {
@@ -97,6 +98,12 @@ export async function analyzeCodebase(
             case SWEAgentType.CODEX:
                 allCommands.push(`npm install -g @openai/codex`);
                 break;
+            case SWEAgentType.DEEPSEEK:
+            case SWEAgentType.ZHIPU:
+            case SWEAgentType.DOUBAO:
+                // Copy llmAgent.js
+                allCommands.push(...getLLMAgentSetupCommands(config));
+                break;
             default:
                 throw new Error(`Unsupported agent type: ${config.agentType}`);
         }
@@ -115,6 +122,11 @@ export async function analyzeCodebase(
                 break;
             case SWEAgentType.CODEX:
                 throw new Error("SWEAgentType.CODEX is not implemented yet for analyzeCodebase");
+            case SWEAgentType.DEEPSEEK:
+            case SWEAgentType.ZHIPU:
+            case SWEAgentType.DOUBAO:
+                allCommands.push(getLLMAgentCommand(config, config.agentType, "/app/codeAnalyzerPrompt.txt"));
+                break;
             default:
                 throw new Error(`Unsupported agent type: ${config.agentType}`);
         }
@@ -128,7 +140,7 @@ export async function analyzeCodebase(
         // Execute all commands in a single run
         const dockerResult = await docker.runCommands(
             allCommands,
-            config.dockerTimeoutSeconds? config.dockerTimeoutSeconds : 0
+            config.dockerTimeoutSeconds ? config.dockerTimeoutSeconds : 0
         );
 
         if (dockerResult.status !== DockerRunStatus.SUCCESS) {
@@ -140,7 +152,7 @@ export async function analyzeCodebase(
         const readTasksCommand = `cat /app/tasks.json`;
         const readTasksResult = await docker.runCommands(
             [readTasksCommand],
-            config.dockerTimeoutSeconds? config.dockerTimeoutSeconds : 0
+            config.dockerTimeoutSeconds ? config.dockerTimeoutSeconds : 0
         );
 
         if (readTasksResult.status !== DockerRunStatus.SUCCESS) {

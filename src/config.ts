@@ -1,4 +1,4 @@
-import {WorkStyle} from './workStyle';
+import { WorkStyle } from './workStyle';
 
 /**
  * Available types of Software Engineering agents
@@ -7,7 +7,9 @@ export enum SWEAgentType {
     GEMINI_CLI = 'gemini-cli',
     CLAUDE_CODE = 'claude-code',
     CODEX = 'codex',
-    // Add more agent types as needed
+    DEEPSEEK = 'deepseek',
+    ZHIPU = 'zhipu',
+    DOUBAO = 'doubao',
 }
 
 /**
@@ -36,7 +38,7 @@ export interface Config {
     /** 
      * API key for Google Gemini CLI
      * export GEMINI_API_KEY=your-google-gemini-api-key
-    */
+     */
     googleGeminiApiKey?: string;
 
     /**
@@ -53,6 +55,25 @@ export interface Config {
      */
     openAICodexApiKey?: string;
     openAICodexAPIKeyExportNeeded?: boolean;
+
+    /**
+     * DeepSeek Configuration
+     */
+    deepSeekApiKey?: string;
+    deepSeekModel?: string;
+
+    /**
+     * Zhipu (ChatGLM) Configuration
+     */
+    zhipuApiKey?: string;
+    zhipuModel?: string;
+
+    /**
+     * Doubao (ByteDance) Configuration
+     */
+    doubaoApiKey?: string;
+    doubaoModel?: string;
+    doubaoBaseUrl?: string;
 
     /**
      * Maximum number of Docker containers that can run locally
